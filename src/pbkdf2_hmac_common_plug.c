@@ -370,6 +370,8 @@ struct fmt_tests pbkdf2_hmac_sha1_common_tests[] = {
 	{"$pbkdf2-hmac-sha1$1000.3031323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132.fae2eacc292606642bbf4eb74c35e18bc5f6297b", "password"},      // 53
 	{"$pbkdf2-hmac-sha1$1000.30313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031.c13037123928b5c895df01e2e371752d447495ca", "password"},        // 52
 	{"$pbkdf2-hmac-sha1$1000.303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930.a145d99036ea8d7ec08b5b10b3fa2b5227482d16", "password"},          // 51
+	// tests of hashes with non standard key lengths
+	{"$pbkdf2-hmac-sha1$1002$c7cafb23ec2a9d4c035a90aeed8ba498$696007ba41d15631e131061539ad1bb8", "password"}, // truncated or short hashes, 16 bytes, used in Chrome Sync/Nigori
 	{NULL}
 };
 
@@ -401,7 +403,7 @@ int pbkdf2_hmac_sha1_valid(char *ciphertext, struct fmt_main *self) {
 	if (!(ptr = strtokm(NULL, delim)))
 		goto error;
 	len = strlen(ptr); // binary hex length
-	if (len < PBKDF2_SHA1_BINARY_SIZE || len > PBKDF2_SHA1_MAX_BINARY_SIZE || len & 1)
+	if (len < PBKDF2_SHA1_MIN_BINARY_SIZE || len > PBKDF2_SHA1_MAX_BINARY_SIZE || len & 1)
 		goto error;
 	if (!ishex(ptr))
 		goto error;

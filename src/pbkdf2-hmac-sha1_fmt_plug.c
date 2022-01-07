@@ -59,7 +59,7 @@ static struct custom_salt {
 	unsigned int length;
 	unsigned int rounds;
 	unsigned int use_utf8;
-	//unsigned int outlen; /* Not used yet */
+	unsigned int keyoutlen; /* not really part of the salt, but this is more of a params struct anyway */
 	unsigned char salt[PBKDF2_32_MAX_SALT_SIZE];
 } *cur_salt;
 
@@ -87,6 +87,7 @@ static void *get_salt(char *ciphertext)
 	static struct custom_salt cs;
 	char *p;
 	int saltlen;
+	int keylen;
 
 	memset(&cs, 0, sizeof(cs));
 	ciphertext += PBKDF2_SHA1_TAG_LEN;
@@ -104,6 +105,9 @@ static void *get_salt(char *ciphertext)
 	}
 	cs.length = saltlen;
 
+	p = strrchr(ciphertext, '$') + 1;
+	keylen = strlen(p) >> 1;
+	cs.keyoutlen = keylen < PBKDF2_SHA1_BINARY_SIZE ? keylen : PBKDF2_SHA1_BINARY_SIZE;
 	return (void *)&cs;
 }
 
@@ -139,13 +143,13 @@ static int crypt_all(int *pcount, struct db_salt *salt)
 		pbkdf2_sha1_sse((const unsigned char **)pin, lens,
 		                cur_salt->salt, cur_salt->length,
 		                cur_salt->rounds, &(x.poutc),
-		                PBKDF2_SHA1_BINARY_SIZE, 0);
+		                cur_salt->keyoutlen, 0);
 #else
 		pbkdf2_sha1((const unsigned char*)(saved_key[index]),
 		            strlen(saved_key[index]),
 		            cur_salt->salt, cur_salt->length,
 		            cur_salt->rounds, (unsigned char*)crypt_out[index],
-		            PBKDF2_SHA1_BINARY_SIZE, 0);
+		            cur_salt->keyoutlen, 0);
 #endif
 	}
 	return count;
@@ -156,14 +160,16 @@ static int cmp_all(void *binary, int count)
 	int index;
 
 	for (index = 0; index < count; index++)
+	{
 		if (!memcmp(binary, crypt_out[index], ARCH_SIZE))
 			return 1;
+	}
 	return 0;
 }
 
 static int cmp_one(void *binary, int index)
 {
-	return !memcmp(binary, crypt_out[index], PBKDF2_SHA1_BINARY_SIZE);
+	return !memcmp(binary, crypt_out[index], cur_salt->keyoutlen);
 }
 
 static void set_key(char *key, int index)
