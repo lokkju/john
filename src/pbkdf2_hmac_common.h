@@ -32,7 +32,7 @@
 #define PBKDF2_MD5_MAX_CIPHERTEXT_LENGTH   (PBKDF2_MD5_TAG_LEN + 6 + 1 + 2*PBKDF2_32_MAX_SALT_SIZE + 1 + 2*PBKDF2_MDx_MAX_BINARY_SIZE)
 
 #define PBKDF2_SHA1_BINARY_SIZE             20
-#define PBKDF2_SHA1_MIN_BINARY_SIZE         4
+#define PBKDF2_SHA1_MIN_BINARY_SIZE         8 // optimize for maximum arch size, for cmp_all
 #define PBKDF2_SHA1_MAX_BINARY_SIZE         (4 * PBKDF2_SHA1_BINARY_SIZE)
 #define PBKDF2_SHA1_FORMAT_TAG              "$pbkdf2-hmac-sha1$"
 #define PBKDF2_SHA1_TAG_LEN                 (sizeof(PBKDF2_SHA1_FORMAT_TAG) - 1)
